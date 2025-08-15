@@ -1,4 +1,4 @@
-use alloy::{primitives::{U256, Address, fixed_bytes}};
+use alloy::primitives::{U256, Address, fixed_bytes};
 use reth::{api::{FullNodeComponents, NodeTypes}, primitives::EthPrimitives, providers::Chain};
 use reth_exex::{ExExContext, ExExEvent, ExExNotification};
 use futures_util::TryStreamExt;
@@ -14,7 +14,6 @@ mod transfer;
 mod detector;
 
 /// Example filter: only log large transfers and transfers involving specific addresses/tokens.
-/// In a real app, you might want to make this configurable.
 fn apply_transfer_filter(transfer: &TransferEvent, filter: &TransferFilter) -> bool {
     match filter {
         TransferFilter::All => true,
@@ -102,9 +101,9 @@ fn format_transfer(transfer: &TransferEvent) -> String {
 
 async fn erc20_monitor_exex<Node>(mut ctx: ExExContext<Node>) -> eyre::Result<()>
 where Node: FullNodeComponents<Types: NodeTypes<Primitives = EthPrimitives>> {
-    // Example: set up a filter for large transfers
+    // set up a filter for large transfers
     let filter = TransferFilter::LargeTransfers(U256::from(1_000_000u64));
-    let mut detector = TransferDetector::new(filter.clone());
+    // let detector = TransferDetector::new(filter.clone());
 
     while let Some(notification) = ctx.notifications.try_next().await? {
         match &notification {
@@ -121,7 +120,7 @@ where Node: FullNodeComponents<Types: NodeTypes<Primitives = EthPrimitives>> {
 
         if let Some(committed_chain) = notification.committed_chain() {
             // Process the committed chain for transfer events
-            process_committed_chain(&*committed_chain, &detector, &filter).await;
+            process_committed_chain(&*committed_chain, &filter).await;
             ctx.events.send(ExExEvent::FinishedHeight(committed_chain.tip().num_hash()))?;
         }
     }
@@ -129,13 +128,13 @@ where Node: FullNodeComponents<Types: NodeTypes<Primitives = EthPrimitives>> {
     Ok(())
 }
 
-async fn process_committed_chain(chain: &Chain, detector: &TransferDetector, filter: &TransferFilter) {
+async fn process_committed_chain(chain: &Chain, filter: &TransferFilter) {
     let blocks = chain.blocks();
     info!("Processing committed chain with {} blocks", blocks.len());
 
     for (_, block) in blocks {
         let block_number = block.number;
-        let timestamp = block.timestamp;
+        // let timestamp = block.timestamp;
         let block_hash = block.hash();
 
         info!("Processing block {} (hash: {:?})", block_number, block_hash);
